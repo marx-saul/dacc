@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/dacc
+dacc.so
+dacc.dylib
+dacc.dll
+dacc.a
+dacc.lib
+dacc-test-*
+*.exe
+*.o
+*.obj
+*.lst

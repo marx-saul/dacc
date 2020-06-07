@@ -1,0 +1,12 @@
+{
+	"authors": [
+		"marx-saul"
+	],
+	"copyright": "Copyright © 2020, marx-saul",
+	"description": "An LALR(1) parser",
+	"license": "BSL-1.0",
+	"name": "dacc",
+	"excludedSourceFiles": [
+		"example/*",
+	],
+}

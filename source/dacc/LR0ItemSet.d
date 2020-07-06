@@ -139,6 +139,10 @@ class LR0ItemSet {
 		return new LR0ItemSet(grammar, goto_item_set);
 	}
 
+	bool empty() @property inout {
+		return non_kernel.cardinal == 0 && kernel.cardinal == 0;
+	}
+
 	// to string
 	string toString(const Grammar grammar) {
 		string result = "{ ";

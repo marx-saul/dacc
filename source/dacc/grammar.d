@@ -162,12 +162,13 @@ package class Grammar {
 	package Production[] productions;
 	// if (s, i) in prod_by_nonterms[sym], then i-th production is of the form sym => rhs0 rhs1 ...
 	package Tuple!(Symbol, "rhs0", size_t, "num")[][] prod_by_nonterms;
+	package size_t[Symbol] empty_generate;	// empty_generate[sym] = i means that i-th production is sym -> e
 	
 	// return the identifier of the symbol
 	private string[] symbol_name_dictionary;
 	public  string nameOf(inout const Symbol sym) inout {
 		if	  (sym == virtual_)	  return "#";
-		else if (sym == end_of_file) return "$";
+		else if (sym == end_of_file) return "EOF";
 		else if (sym == empty_)	   return "ε";
 		else if (0 <= sym && sym < symbol_name_dictionary.length) return symbol_name_dictionary[sym];
 		else return to!string(sym);
@@ -241,6 +242,10 @@ package class Grammar {
 		}
 		foreach (i, prod; productions) {
 			prod_by_nonterms[prod.lhs] ~= Tuple!(Symbol, "rhs0", size_t, "num")(prod.rhs[0], i);
+			if (prod.rhs.length == 1 && prod.rhs[0] == empty_) {
+				//assert(prod.lhs !in empty_generate)
+				empty_generate[prod.lhs] = i;
+			}
 		}
 
 		/* ************** FIRST ************** */

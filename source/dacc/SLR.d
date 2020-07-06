@@ -27,7 +27,27 @@ unittest {
 		writeln("Exec time: ", sw1.peek.total!"usecs", " us");
 		slr_table_info.state_set.each!(x => x.toString(grammar1).writeln());
 		writeln(slr_table_info.display_table);
-		writeln();
+	}
+	{
+		StopWatch sw1;
+		sw1.start();
+		enum:Symbol { Expr = 1, Term, Factor, Expr_, Term_, id, add, mul, lPar, rPar, }
+		auto grammar1 = new Grammar([
+			Production(Expr, [Term, Expr_]),
+			Production(Expr_, [add, Term, Expr_]),
+			Production(Expr_, [empty_]),
+			Production(Term, [Factor, Term_]),
+			Production(Term_, [mul, Factor, Term_]),
+			Production(Term_, [empty_]),
+			Production(Factor, [id]),
+			Production(Factor, [lPar, Expr, rPar]),
+		], rPar, Term_, ["S'", "Expr", "Term", "Fact", "Expr'", "Term'", "id", "add", "mul", "lPar", "rPar"]);
+
+		auto slr_table_info = new SLRTableInfo(grammar1);
+		sw1.stop();
+		writeln("Exec time: ", sw1.peek.total!"usecs", " us");
+		slr_table_info.state_set.each!(x => x.toString(grammar1).writeln());
+		writeln(slr_table_info.display_table);
 	}
 }
 
@@ -96,23 +116,25 @@ private Tuple!(GLRTable, LR0ItemSet[]) getSLRtableAndStateSet(Grammar grammar) {
 	foreach (st, item_set; state_set) {
 		foreach (item; item_set.non_kernel) {
 			auto production = grammar.productions[item.num];
-			// A -> s.
-			if (item.index >= production.rhs.length) {
+			// A -> s. A -> .e
+			if (item.index >= production.rhs.length || production.rhs.length == 1 && production.rhs[0] == empty_) {
 				// if production is S' -> S.
 				if (production.lhs == grammar.start_symbol) {
 					add_entry(st, grammar.end_of_file, LREntry(Action.accept, 0));
 					continue;
 				}
-				// for each sym in Follow(A), add (reduce, item.num) if A is
-				foreach (sym; grammar.follow(production.lhs))
-					add_entry(st, sym, LREntry(Action.reduce, item.num));
+				else
+					// for each sym in Follow(A), add (reduce, item.num) if A is
+					foreach (sym; grammar.follow(production.lhs))
+						add_entry(st, sym, LREntry(Action.reduce, item.num));
 			}
 		}
-		// sym -> .e
-		foreach (sym; item_set.kernel) {
-			auto ptr = sym in grammar.empty_generate;
+		// A -> .e
+		foreach (symbol; item_set.kernel) {
+			auto ptr = symbol in grammar.empty_generate;
 			if (!ptr) continue;
-			add_entry(st, sym, LREntry(Action.reduce, *ptr));
+			foreach (sym; grammar.follow(symbol))
+				add_entry(st, sym, LREntry(Action.reduce, *ptr));
 		}
 	}
 
@@ -133,6 +155,7 @@ class SLRTableInfo {
 
 	// get table
 	string display_table() @property {
+		Tuple!(State, Symbol)[] conflictions;
 		import std.conv: to;
 		string result = "\t ";
 		foreach (sym; 1 .. grammar.max_symbol+2) {
@@ -144,21 +167,37 @@ class SLRTableInfo {
 			foreach (sym; 1 .. grammar.max_symbol+2) {
 				auto entry_set_ptr = sym in gtable[state];
 				if (!entry_set_ptr) result ~= "---\t| ";
-				else if (entry_set_ptr.cardinal > 1) result ~= "con\t| ";
+				else if (entry_set_ptr.cardinal > 1) {
+					result ~= "con\t| ";
+					conflictions ~= tuple(state, sym);
+				}
 				else {
 					auto entry = entry_set_ptr.front;
 					final switch (entry.action) {
-					case Action.error:  assert(0);
-					case Action.shift:  result ~= "s" ~ entry.num.to!string ~ "\t| "; break;
-					case Action.goto_:  result ~= "g" ~ entry.num.to!string ~ "\t| "; break;
-					case Action.reduce: result ~= "r" ~ entry.num.to!string ~ "\t| "; break;
-					case Action.accept: result ~= "acc\t| "; break;
+						case Action.error:  assert(0);
+						case Action.shift:  result ~= "s" ~ entry.num.to!string ~ "\t| "; break;
+						case Action.goto_:  result ~= "g" ~ entry.num.to!string ~ "\t| "; break;
+						case Action.reduce: result ~= "r" ~ entry.num.to!string ~ "\t| "; break;
+						case Action.accept: result ~= "acc\t| "; break;
 					}
 				}
 			}
 			result ~= "\n";
 		}
-
+		foreach (conflict; conflictions) {
+			auto state = conflict[0], symbol = conflict[1];
+			result ~= state.to!string ~ " " ~ grammar.nameOf(symbol) ~ " : ";
+			foreach (entry; gtable[state][symbol]) {
+				final switch (entry.action) {
+					case Action.error:  assert(0);
+					case Action.shift:  result ~= "s" ~ entry.num.to!string ~ ", "; break;
+					case Action.goto_:  result ~= "g" ~ entry.num.to!string ~ ", "; break;
+					case Action.reduce: result ~= "r" ~ entry.num.to!string ~ ", "; break;
+					case Action.accept: result ~= "acc, "; break;
+				}
+			}
+			result = result[0 .. $-2] ~ "\n";
+		}
 		return result;
 	}
 }

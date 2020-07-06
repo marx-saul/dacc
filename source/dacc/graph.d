@@ -24,7 +24,9 @@ unittest {
 		tuple(8u, 9u),
 	]);
 	auto strong_components = graph.strong_decomposition();
+	writeln("Strong components");
 	foreach (sc; strong_components) { writeln(sc.array); }
+	writeln();
 
 	graph = new DirectedGraph(10u, [
 		tuple(0u, 3u),
@@ -43,13 +45,15 @@ unittest {
 		tuple(1u, 4u),
 	]);
 	auto vertices = graph.topological_sort();
-	writeln(vertices);
+	writeln("Topological sort\n", vertices);
 }
 
 class DirectedGraph {
 	immutable uint vert_num;	// the number of vertices, 0, 1, ..., vert_num - 1
 	Set!(uint)[] paths;			// there is a path i ---> j  iff  j in paths[i]. Each paths[i] must not be null.
 	Set!(uint)[] rev_paths;		// j in paths[i] iff i in paths[j]. Each paths[i] must not be null.
+	uint[][] paths_array;
+	uint[][] rev_paths_array;
 
 	private this(uint vn) {
 		vert_num = vn;
@@ -61,6 +65,8 @@ class DirectedGraph {
 		}
 		paths = ps;
 		rev_paths = rp;
+		paths_array.length = vn;
+		rev_paths_array.length = vn;
 	}
 	public  this(uint vn, Tuple!(uint, uint)[] edges) {
 		this(vn);
@@ -69,6 +75,10 @@ class DirectedGraph {
 			paths[e[0]].add(e[1]);
 			rev_paths[e[1]].add(e[0]);
 		}
+		foreach (v; 0..vn) {
+			paths_array[v] = paths[v].array;
+			rev_paths_array[v] = rev_paths[v].array;
+		}
 	}
 
 	// return the array of strong components, sorted in order of the representatives.
@@ -76,60 +86,70 @@ class DirectedGraph {
 		uint[] rep;
 		Set!(uint)[] comp;
 
-		// if the vertex v already appeared in get_post_order.stack
+		// if the vertex v already appeared in some of get_post_order.stack
 		auto processed = new bool[vert_num];
+		auto pushed_vertices = new uint[vert_num];
 
 		// get an array of vertices in post order that can be reached from v
 		uint[] get_post_order(uint v) {
 			// DFS
-			uint[] stack = [v];
+			uint[] stack = [v]; processed[v] = true;
 			uint[] result;
 
 			while (stack.length > 0) {
 				auto top_v = stack[$-1];
-				// already visited this vertex.
-				if (processed[top_v]) {
-					result ~= top_v;	// post_order
-					stack.length -= 1;
+				auto edge_index = pushed_vertices[top_v];
+				// all vertices w s.t. top_v ---> w are pushed
+				if (edge_index >= paths_array[top_v].length) {
+					stack.length -= 1; // pop
+					result ~= top_v;
 					continue;
 				}
-				// push all unvisited vertices to_v that can reach from top_v
-				foreach (to_v; paths[top_v]) if (!processed[to_v]) {
-					stack ~= to_v;
+				auto to_v = paths_array[top_v][edge_index];
+				// have not pushed
+				if (!processed[to_v]) {
+					stack ~= to_v; // push
+					processed[to_v] = true;
 				}
-				processed[top_v] = true;
+				++pushed_vertices[top_v];	// dealt with one w s.t. top_v ---> w
 			}
+
 			return result;
 		}
 
+		auto visited = new bool[vert_num];
+		auto pushed_vertices2 = new uint[vert_num];
 		// get strong components from a component
 		// vs are in post order
 		Set!(uint)[] get_strong_components(uint[] vs) {
 			Set!(uint)[] result;
-			auto visited = new bool[vert_num];
 
 			foreach_reverse (k, v; vs) {
 				// if already visited
 				if (visited[v]) continue;
 
-				// reverse DFS (DFS on rev_paths)
-				auto stack = [v];
+				// DFS on rev_paths
+				auto stack = [v]; visited[v] = true;
 				auto strong_component = new Set!(uint);
 
 				while (stack.length > 0) {
 					auto top_v = stack[$-1];
-					// already visited
-					if (visited[stack[$-1]]) {
-						strong_component.add(top_v);
+					auto edge_index = pushed_vertices2[top_v];
+					// all vertices w s.t. top_v ---> w are pushed
+					if (edge_index >= rev_paths_array[top_v].length) {
 						stack.length -= 1;
+						strong_component.add(top_v);
 						continue;
 					}
-					// push
-					foreach (from_v; rev_paths[top_v]) if (!visited[from_v]) {
-						stack ~= from_v;
+					auto from_v = rev_paths_array[top_v][edge_index];
+					// have not pushed
+					if (!visited[from_v]) {
+						stack ~= from_v; // push
+						visited[from_v] = true;
 					}
-					visited[top_v] = true;
+					++pushed_vertices2[top_v];	// dealt with one w s.t. top_v ---> w
 				}
+
 				result ~= strong_component;
 			}
 			return result.sort!((a,b) => a.front < b.front).array;
@@ -199,3 +219,4 @@ class DirectedGraph {
 		return result;
 	}
 }
+

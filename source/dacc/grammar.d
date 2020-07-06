@@ -71,7 +71,7 @@ unittest {
 			Production(Expr_, [add, Term, Expr_]),
 			Production(Expr_, [empty_]),
 			Production(Term, [Factor, Term_]),
-			Production(Term_, [mul, Term_]),
+			Production(Term_, [mul, Factor, Term_]),
 			Production(Term_, [empty_]),
 			Production(Factor, [id]),
 			Production(Factor, [lPar, Expr, rPar]),
@@ -154,6 +154,7 @@ unittest {
 
 		writeln();
 	}
+
 }
 
 // nonterminal symbols: start_symbol = 0 (augmented start symbol), 1 (original start symbol), 2, ..., max_nonterminal_symbol
@@ -364,12 +365,14 @@ package class Grammar {
 					follow_set[i] += follow_table[sym];
 				}
 			}
+			// propagate
 			foreach (i; tssc_index) {
 				// i ---> j
 				foreach (j; shrunk_graph.paths[i]) {
 					follow_set[j] += follow_set[i];
 				}
 			}
+			// set
 			foreach (i, sc; strong_components) foreach (sym; sc) {
 				follow_table[sym] = follow_set[i];
 			}

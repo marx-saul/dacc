@@ -39,7 +39,7 @@ unittest {
 // this item is LR0Item(n, m)
 // if there are items [A -> .s], then A in kernel
 alias LR0Item = Tuple!(size_t, "num", size_t, "index");
-private pure bool itemLess(LR0Item a, LR0Item b) {
+package pure @nogc @safe bool itemLess(LR0Item a, LR0Item b) {
 	return ( a.num < b.num ) || ( a.num == b.num && a.index < b.index );
 }
 alias LR0Items = Set!(LR0Item, itemLess);

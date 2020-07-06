@@ -203,11 +203,11 @@ package class Grammar {
 	public pure Symbol end_of_file() @safe @nogc @property inout { return _end_of_file; }
 
 	// $ is a terminal, e is not a terminal
-	bool is_terminal(Symbol s) inout {
-		return max_nonterminal_symbol < s;
+	pure bool is_terminal(Symbol s) inout {
+		return max_nonterminal_symbol < s || s == virtual_;
 	}
 	// e is not a terminal
-	bool is_nonterminal(Symbol s) inout {
+	pure bool is_nonterminal(Symbol s) inout {
 		return 0 <= s && s <= max_nonterminal_symbol;
 	}
 	
@@ -281,7 +281,7 @@ package class Grammar {
 			/* ************** calculate first ************** */
 			// for all non terminal symbols X, Y
 			// Define a path X ---> Y iff FIRST(X) is contained in FIRST(Y) and X =/= Y.
-			Tuple!(uint, uint)[] edges;
+			Tuple!(size_t, size_t)[] edges;
 
 			// if there is a production X::=A1 ... An with A1, ..., A(i-1) =>* ε, Ai =/= X  and Ai is nonterminal, then Ai ---> X.
 			foreach (production; productions) {
@@ -294,14 +294,14 @@ package class Grammar {
 					}
 					// add an edge
 					else if (sym != production.lhs && sym != empty_) {
-						edges ~= tuple(cast(uint) sym, cast(uint) production.lhs);	// Ai ---> X
+						edges ~= tuple(cast(size_t) sym, cast(size_t) production.lhs);	// Ai ---> X
 					}
 					// no more ε-generating
 					if (empty_ !in first_table[production.lhs]) break;
 				}
 			}
 
-			auto graph = new DirectedGraph(cast(uint) max_nonterminal_symbol+1, edges);
+			auto graph = new DirectedGraph(cast(size_t) max_nonterminal_symbol+1, edges);
 			auto strong_components = graph.strong_decomposition();
 			auto representatives = graph.get_representative(strong_components);
 			auto shrunk_graph = graph.shrink(strong_components, representatives);
@@ -335,7 +335,7 @@ package class Grammar {
 			// If there is a production A -> sBt, add all nonterminals in FIRST(t) except e to FOLLOW(B)
 			// If there is a production A -> sBt with e in FIRST(t) or t = e, then FOLLOW(A) is contained in FOLLOW(B)
 			// A ---> B iff FOLLOW(A) is contained in FOLLOW(B)
-			Tuple!(uint, uint)[] edges;
+			Tuple!(size_t, size_t)[] edges;
 			foreach (production; productions) {
 				// production.lhs = A, non_t = B, production.rhs[i+1 .. $] = t.
 				foreach (i, non_t; production.rhs[0 .. $-1]) if (is_nonterminal(non_t)) {
@@ -343,13 +343,13 @@ package class Grammar {
 					follow_table[non_t] += first_set;
 					if (empty_ in first_set) {
 						follow_table[non_t].remove(empty_);
-						edges ~= tuple(cast(uint) production.lhs, cast(uint) non_t);
+						edges ~= tuple(cast(size_t) production.lhs, cast(size_t) non_t);
 					}
 				}
-				if (is_nonterminal(production.rhs[$-1])) edges ~= tuple(cast(uint) production.lhs, cast(uint) production.rhs[$-1]);
+				if (is_nonterminal(production.rhs[$-1])) edges ~= tuple(cast(size_t) production.lhs, cast(size_t) production.rhs[$-1]);
 			}
 
-			auto graph = new DirectedGraph(cast(uint) max_nonterminal_symbol+1, edges);
+			auto graph = new DirectedGraph(cast(size_t) max_nonterminal_symbol+1, edges);
 			auto strong_components = graph.strong_decomposition();
 			auto representatives = graph.get_representative(strong_components);
 			auto shrunk_graph = graph.shrink(strong_components, representatives);
@@ -379,7 +379,7 @@ package class Grammar {
 		}
 	}
 
-	package SymbolSet first(Symbol[] symbols...) {
+	package SymbolSet first(Symbol[] symbols) {
 		auto result = new SymbolSet;
 		foreach (symbol; symbols) {
 			if (is_terminal(symbol)) {

@@ -7,68 +7,68 @@ import dacc.set;
 unittest {
 	import std.stdio;
 	writeln("## graph unittest");
-	auto graph = new DirectedGraph(10u, [
-		tuple(0u, 1u),
-		tuple(1u, 2u),
-		tuple(1u, 3u),
-		tuple(2u, 3u),
-		tuple(2u, 5u),
-		tuple(2u, 6u),
-		tuple(3u, 4u),
-		tuple(3u, 7u),
-		tuple(4u, 1u),
-		tuple(5u, 8u),
-		tuple(6u, 7u),
-		tuple(7u, 8u),
-		tuple(8u, 6u),
-		tuple(8u, 9u),
+	auto graph = new DirectedGraph(10uL, [
+		tuple(0uL, 1uL),
+		tuple(1uL, 2uL),
+		tuple(1uL, 3uL),
+		tuple(2uL, 3uL),
+		tuple(2uL, 5uL),
+		tuple(2uL, 6uL),
+		tuple(3uL, 4uL),
+		tuple(3uL, 7uL),
+		tuple(4uL, 1uL),
+		tuple(5uL, 8uL),
+		tuple(6uL, 7uL),
+		tuple(7uL, 8uL),
+		tuple(8uL, 6uL),
+		tuple(8uL, 9uL),
 	]);
 	auto strong_components = graph.strong_decomposition();
 	writeln("Strong components");
 	foreach (sc; strong_components) { writeln(sc.array); }
 	writeln();
 
-	graph = new DirectedGraph(10u, [
-		tuple(0u, 3u),
-		tuple(0u, 6u),
-		tuple(8u, 7u),
-		tuple(8u, 2u),
-		tuple(8u, 9u),
-		tuple(8u, 6u),
-		tuple(7u, 1u),
-		tuple(3u, 5u),
-		tuple(3u, 1u),
-		tuple(9u, 6u),
-		tuple(5u, 1u),
-		tuple(5u, 4u),
-		tuple(5u, 6u),
-		tuple(1u, 4u),
+	graph = new DirectedGraph(10uL, [
+		tuple(0uL, 3uL),
+		tuple(0uL, 6uL),
+		tuple(8uL, 7uL),
+		tuple(8uL, 2uL),
+		tuple(8uL, 9uL),
+		tuple(8uL, 6uL),
+		tuple(7uL, 1uL),
+		tuple(3uL, 5uL),
+		tuple(3uL, 1uL),
+		tuple(9uL, 6uL),
+		tuple(5uL, 1uL),
+		tuple(5uL, 4uL),
+		tuple(5uL, 6uL),
+		tuple(1uL, 4uL),
 	]);
 	auto vertices = graph.topological_sort();
 	writeln("Topological sort\n", vertices);
 }
 
 class DirectedGraph {
-	immutable uint vert_num;	// the number of vertices, 0, 1, ..., vert_num - 1
-	Set!(uint)[] paths;			// there is a path i ---> j  iff  j in paths[i]. Each paths[i] must not be null.
-	Set!(uint)[] rev_paths;		// j in paths[i] iff i in paths[j]. Each paths[i] must not be null.
-	uint[][] paths_array;
-	uint[][] rev_paths_array;
+	immutable size_t vert_num;	// the number of vertices, 0, 1, ..., vert_num - 1
+	Set!(size_t)[] paths;			// there is a path i ---> j  iff  j in paths[i]. Each paths[i] must not be null.
+	Set!(size_t)[] rev_paths;		// j in paths[i] iff i in paths[j]. Each paths[i] must not be null.
+	size_t[][] paths_array;
+	size_t[][] rev_paths_array;
 
-	private this(uint vn) {
+	private this(size_t vn) {
 		vert_num = vn;
-		auto ps = new Set!(uint)[vn], rp = new Set!(uint)[vn];
+		auto ps = new Set!(size_t)[vn], rp = new Set!(size_t)[vn];
 		// initialize
 		foreach (v; 0..vn) {
-			ps[v] = new Set!(uint);
-			rp[v] = new Set!(uint);
+			ps[v] = new Set!(size_t);
+			rp[v] = new Set!(size_t);
 		}
 		paths = ps;
 		rev_paths = rp;
 		paths_array.length = vn;
 		rev_paths_array.length = vn;
 	}
-	public  this(uint vn, Tuple!(uint, uint)[] edges) {
+	public  this(size_t vn, Tuple!(size_t, size_t)[] edges) {
 		this(vn);
 		foreach (e; edges) {
 			if (e[0] == e[1]) continue;
@@ -82,19 +82,19 @@ class DirectedGraph {
 	}
 
 	// return the array of strong components, sorted in order of the representatives.
-	public Set!(uint)[] strong_decomposition()  {
-		uint[] rep;
-		Set!(uint)[] comp;
+	public Set!(size_t)[] strong_decomposition()  {
+		size_t[] rep;
+		Set!(size_t)[] comp;
 
 		// if the vertex v already appeared in some of get_post_order.stack
 		auto processed = new bool[vert_num];
-		auto pushed_vertices = new uint[vert_num];
+		auto pushed_vertices = new size_t[vert_num];
 
 		// get an array of vertices in post order that can be reached from v
-		uint[] get_post_order(uint v) {
+		size_t[] get_post_order(size_t v) {
 			// DFS
-			uint[] stack = [v]; processed[v] = true;
-			uint[] result;
+			size_t[] stack = [v]; processed[v] = true;
+			size_t[] result;
 
 			while (stack.length > 0) {
 				auto top_v = stack[$-1];
@@ -118,11 +118,11 @@ class DirectedGraph {
 		}
 
 		auto visited = new bool[vert_num];
-		auto pushed_vertices2 = new uint[vert_num];
+		auto pushed_vertices2 = new size_t[vert_num];
 		// get strong components from a component
 		// vs are in post order
-		Set!(uint)[] get_strong_components(uint[] vs) {
-			Set!(uint)[] result;
+		Set!(size_t)[] get_strong_components(size_t[] vs) {
+			Set!(size_t)[] result;
 
 			foreach_reverse (k, v; vs) {
 				// if already visited
@@ -130,7 +130,7 @@ class DirectedGraph {
 
 				// DFS on rev_paths
 				auto stack = [v]; visited[v] = true;
-				auto strong_component = new Set!(uint);
+				auto strong_component = new Set!(size_t);
 
 				while (stack.length > 0) {
 					auto top_v = stack[$-1];
@@ -164,40 +164,40 @@ class DirectedGraph {
 	}
 
 	// get_representative[i] is the least vertex of the strong component which i belong to.
-	public uint[] get_representative(Set!(uint)[] scs)  {
-		auto result = new uint[vert_num];
+	public size_t[] get_representative(Set!(size_t)[] scs)  {
+		auto result = new size_t[vert_num];
 		foreach (sc; scs) foreach (v; sc) {
 			result[v] = sc.front;
 		}
 		return result;
 	}
 
-	public uint[] get_representative() {
+	public size_t[] get_representative() {
 		return get_representative(strong_decomposition());
 	}
 
 	// return the graph whose strong components are shrunk into a single vertex
 	// i.e. for vertices i and j, i ~ j  iff  i and j belong to the same strong component
-	public DirectedGraph shrink(Set!(uint)[] scs, uint[] reps) {
+	public DirectedGraph shrink(Set!(size_t)[] scs, size_t[] reps) {
 		auto scs_reps = scs.map!(a => a.front).assumeSorted();
-		Tuple!(uint, uint)[] new_edges;
+		Tuple!(size_t, size_t)[] new_edges;
 		// from_v ---> to_v
 		// index of reps[from_v] ---> index of reps[to_v]
 		foreach (i, sc; scs) foreach (from_v; sc) foreach (to_v; paths[from_v]) {
-			new_edges ~= tuple(cast(uint) i, cast(uint) scs_reps.lowerBound(reps[to_v]).length);
+			new_edges ~= tuple(cast(size_t) i, cast(size_t) scs_reps.lowerBound(reps[to_v]).length);
 		}
-		return new DirectedGraph(cast(uint) scs.length, new_edges);
+		return new DirectedGraph(cast(size_t) scs.length, new_edges);
 	}
 
 	// Be sure that the graph is not circular
-	public uint[] topological_sort() {
-		uint[] result;
+	public size_t[] topological_sort() {
+		size_t[] result;
 
-		auto inj_deg = new uint[vert_num];	// injection degree
-		uint[] inj0verts;	// vertices whose injection degree is 0.
+		auto inj_deg = new size_t[vert_num];	// injection degree
+		size_t[] inj0verts;	// vertices whose injection degree is 0.
 
 		foreach (v; 0 .. vert_num) {
-			inj_deg[v] = cast(uint) rev_paths[v].cardinal;
+			inj_deg[v] = cast(size_t) rev_paths[v].cardinal;
 			if (inj_deg[v] == 0) inj0verts ~= v;
 		}
 		// circular

@@ -6,8 +6,6 @@ import std.typecons, std.algorithm;
 unittest {
 	import std.stdio;
 	writeln("## grammar.d unittest 1");
-	//import std.datetime;	// measure the time needed to calculate first and follow table
-	// first and follow
 	import std.datetime.stopwatch: benchmark, StopWatch;
 	{
 		StopWatch sw1;

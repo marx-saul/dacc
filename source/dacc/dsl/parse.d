@@ -50,8 +50,8 @@ unittest {
     //writeln("## dsl.parse.d unittest 1");
 }
 
-/////////////////////////////
-/////////////////////////////
+// ///////////////////////////
+// ///////////////////////////
 pure bool isIdentifier(string token) {
     return token.length > 0 && (isAlpha(token[0]) || token[0] == '_');
 }

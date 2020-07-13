@@ -175,14 +175,6 @@ package class Grammar {
 		else return to!string(sym);
 	}
 	
-	// return the label of productions
-	private string[] rule_label;
-	public pure string labelOf(inout const size_t index) inout {
-		if (index >= rule_label.length) return to!string(index);
-		else if (rule_label[index].length > 0) return rule_label[index];
-		else return to!string(index);
-	}
-	
 	// start symbol of the augmented grammar
 	public pure Symbol start_symbol() @safe @nogc @property inout { return 0; }
 	// start symbol of the original grammar
@@ -215,7 +207,7 @@ package class Grammar {
 	private SymbolSet[]  first_table;
 	private SymbolSet[] follow_table;
 		
-	this (Production[] g, int max_symbol, int max_nonterminal_symbol, string[] snd = [], string[] rl = []) {
+	this (Production[] g, int max_symbol, int max_nonterminal_symbol, string[] snd = []) {
 		assert(g.length > 0, "\033[1m\033[32mthe length of the grammar must be > 0.\033[0m");
 		// initialize
 		_end_of_file = max_symbol + 1;
@@ -223,7 +215,6 @@ package class Grammar {
 		_max_symbol = max_symbol;
 		_max_nonterminal_symbol = max_nonterminal_symbol;
 		symbol_name_dictionary = snd;
-		rule_label = rl;
 		_symbols = SuccessiveNumbers!uint(0, max_symbol);
 		_nonterminal_symbols = SuccessiveNumbers!uint(0, _max_nonterminal_symbol);
 		   _terminal_symbols = SuccessiveNumbers!uint(_max_nonterminal_symbol+1, max_symbol);

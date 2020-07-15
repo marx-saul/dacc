@@ -370,6 +370,7 @@ package class Grammar {
 		}
 	}
 
+	// get FIRST
 	package SymbolSet first(Symbol[] symbols) {
 		auto result = new SymbolSet;
 		foreach (symbol; symbols) {
@@ -389,7 +390,20 @@ package class Grammar {
 		return result;
 	}
 
+	// get FOLLOW
 	package SymbolSet follow(Symbol symbol) {
 		return follow_table[symbol];
+	}
+
+	// get the string of the production
+	public string production_string(size_t i) inout {
+		string result;
+		auto production = productions[i];
+		result ~= nameOf(production.lhs);
+		result ~= " => ";
+		foreach (sym; production.rhs) {
+			result ~= nameOf(sym) ~ " ";
+		}
+		return result;
 	}
 }

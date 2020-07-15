@@ -200,33 +200,33 @@ class SLRTableInfo {
 		return result;
 	}
 
-    string generate_table_literal() {
+	string generate_table_literal() {
 		string result;
 
-        /* ********* get the literal of the table ********* */
-        result ~= "[\n";
+		/* ********* get the literal of the table ********* */
+		result ~= "[\n";
 
-        foreach (state; 0 .. state_set.length) {
+		foreach (state; 0 .. state_set.length) {
 			// write the item set to the comment
-            result ~= "\t/* state " ~ state.to!string ~ "\n";
-            foreach (item; state_set[state].non_kernel) {
-                result ~= "\t * ";
-                auto production = grammar.productions[item.num];
-                result ~= grammar.nameOf(production.lhs) ~ " => ";
-                foreach (sym; production.rhs[0 .. item.index]) {
-                    result ~= grammar.nameOf(sym) ~ " ";
-                }
-                result ~= ". ";
-                foreach (sym; production.rhs[item.index .. $]) {
-                    result ~= grammar.nameOf(sym) ~ " ";
-                }
-                result ~= "\n";
-            }
+			result ~= "\t/* state " ~ state.to!string ~ "\n";
+			foreach (item; state_set[state].non_kernel) {
+				result ~= "\t * ";
+				auto production = grammar.productions[item.num];
+				result ~= grammar.nameOf(production.lhs) ~ " => ";
+				foreach (sym; production.rhs[0 .. item.index]) {
+					result ~= grammar.nameOf(sym) ~ " ";
+				}
+				result ~= ". ";
+				foreach (sym; production.rhs[item.index .. $]) {
+					result ~= grammar.nameOf(sym) ~ " ";
+				}
+				result ~= "\n";
+			}
 
 			// entry column
-            //result ~= "\t */\n\tassumeSorted!((a,b) => a.sym < b.sym, dacc_LREntry[])([\n";
-            result ~= "\t */\n\tdacc_Sorted_column([\n";
-            scope(exit) result ~= "\t]),\n";
+			//result ~= "\t */\n\tassumeSorted!((a,b) => a.sym < b.sym, dacc_LREntry[])([\n";
+			result ~= "\t */\n\tdacc_Sorted_column([\n";
+			scope(exit) result ~= "\t]),\n";
 			// write one column of the table
 			foreach (sym; 1 .. grammar.max_symbol+2) {
 				auto ptr = sym in table[state];
@@ -236,27 +236,22 @@ class SLRTableInfo {
 				result ~=
 				  "\t\t"
 				  ~ "dacc_LREntry("
-				    ~ sym.to!string ~ ", dacc_Action." ~ ptr.action ~ ", " ~ ptr.num.to!string
-				  ~ "),";
-                result ~= " // " ~ grammar.nameOf(sym) ~ "\t<-";
-                if (gtable[state][sym].cardinal > 1) result ~= "c";
-                result ~= "-> ";
+					~ sym.to!string ~ ", dacc_Action." ~ ptr.action ~ ", " ~ ptr.num.to!string
+				  ~ "u),";
+				result ~= "\t// " ~ grammar.nameOf(sym) ~ "\t<-";
+				if (gtable[state][sym].cardinal > 1) result ~= "c";
+				result ~= "-> ";
 				// comment
 				if (ptr.action == Action.reduce) {
-					result ~= "reduce by ";
-					auto production = grammar.productions[ptr.num];
-					result ~= grammar.nameOf(production.lhs) ~ " => ";
-					foreach (s; production.rhs) {
-						result ~= grammar.nameOf(s) ~ " ";
-					}
+					result ~= "reduce by " ~ grammar.production_string(ptr.num);
 				}
 				result ~= "\n";
 			}
-        }
+		}
 
 		result ~= "];";
-        return result;
-    }
+		return result;
+	}
 }
 
 

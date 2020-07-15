@@ -104,7 +104,7 @@ DSLRule parseRhs(ref string token, string lhs, string text, ref size_t index, re
         }
     }
     if (token.length > 0 && token[0] == '`') {
-        result.code = token[1..$-1];
+        result.code = token[1..$];  // get rid of `
         token = nextToken(text, index, line_num);
     }
     return result;
